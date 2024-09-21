@@ -2,12 +2,14 @@ package das.tools.gui.fontawesome;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
@@ -15,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
+import org.controlsfx.control.textfield.TextFields;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
 import org.controlsfx.glyphfont.GlyphFont;
@@ -22,6 +25,8 @@ import org.controlsfx.glyphfont.GlyphFontRegistry;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,7 +35,6 @@ public class Gui implements GuiInterface {
     private VBox glyphsContainer;
     private HBox topBox;
     private Slider slider;
-    private Spinner<Integer> spinner;
     private final ColorPicker cpFontColor;
     private final ColorPicker cpBackColor;
     private Color fontColor = Color.BLACK;
@@ -39,12 +43,15 @@ public class Gui implements GuiInterface {
     private final CheckBox chbShowDialog;
     private final CheckBox chbConstGlyphsAmount;
     private final GlyphFont glyphFont;
+    private List<Labeled[]> controlsLines;
+    private TextField edSearchGliph;
 
     private Gui() {
         glyphFont = GlyphFontRegistry.font("FontAwesome");
         chbShowDialog = new CheckBox(SHOW_DIALOG_LABEL_TEXT);
         chbShowDialog.setTooltip(new Tooltip(SHOW_DIALOG_TOOLTIP));
         chbConstGlyphsAmount = new CheckBox(CONST_GLYPH_LABEL_TEXT);
+        chbConstGlyphsAmount.setSelected(true);
         chbConstGlyphsAmount.setTooltip(new Tooltip(CONST_GLYPH_TOOLTIP));
         chbConstGlyphsAmount.setOnAction(e -> updateItems());
         cpFontColor = new ColorPicker();
@@ -78,9 +85,8 @@ public class Gui implements GuiInterface {
         HBox box = new HBox(
                 10, getSizeBox(), getColorsBox(), getOptionsBox()
         );
-        box.setMinHeight(TOP_BOX_MIN_HEIGHT);
-        box.setPadding(SLIDER_BOX_PADDING);
-        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPadding(TOP_BOX_PADDING);
+        box.setAlignment(Pos.TOP_LEFT);
         return box;
     }
 
@@ -109,6 +115,7 @@ public class Gui implements GuiInterface {
         int glyphsPerLine = chbConstGlyphsAmount.isSelected() ? GLYPHS_PER_LINE : GLYPHS_IN_LINE_COUNTS[(int) slider.getValue() - 1];
         glyphsContainer.getChildren().clear();
         FontAwesome.Glyph[] glyphs = FontAwesome.Glyph.values();
+        controlsLines = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(EXECUTOR_THREADS_AMOUNT);
         for (int i = 0; i < glyphs.length; i = i + glyphsPerLine) {
             Labeled[] lineControls = new Labeled[Math.min(glyphs.length - i, glyphsPerLine)];
@@ -122,6 +129,7 @@ public class Gui implements GuiInterface {
                     lineControls[j < glyphsPerLine ? j : j - n] = getGlyphControl(glyph, controlWidth);
                 }
                 lineBox.getChildren().addAll(lineControls);
+                controlsLines.add(lineControls);
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
@@ -145,16 +153,17 @@ public class Gui implements GuiInterface {
         } else {
             ctrl = new Button("", controlGlyph);
         }
+        ctrl.setUserData(glyph.name());
         ctrl.setPrefWidth(controlWidth);
         ctrl.setPadding(GLYPH_CONTROL_PADDING);
-        if (!backColor.equals(BUTTON_DEFAULT_COLOR)) {
-            setControlBackColor(ctrl);
-        }
+        setControlBackColor(ctrl);
         ctrl.setTooltip(new Tooltip(
                 String.format(GLYPH_BUTTON_TOOLTIP_MESSAGE, glyph.name(), glyph.ordinal(), getHexValue(glyph))));
         ctrl.setOnMouseClicked(e -> {
             if (e.getButton().equals(MouseButton.PRIMARY)) {
                 updateDemoButton(glyph);
+                String text = edSearchGliph.getText();
+                if (!"".equals(text) && !text.equals(glyph.name())) edSearchGliph.setText("");
                 if (chbShowDialog.isSelected()) showInfoDialog(glyph);
             } else if (e.getButton().equals(MouseButton.SECONDARY)) {
                 copyGlyphNameToClipboard(glyph);
@@ -194,7 +203,7 @@ public class Gui implements GuiInterface {
 
     private void showInfoDialog(FontAwesome.Glyph glyph) {
         GlyphInfoDialog dlg = new GlyphInfoDialog(glyphFont, glyph);
-        dlg.initOwner(spinner.getScene().getWindow());
+        dlg.initOwner(slider.getScene().getWindow());
         dlg.initModality(Modality.NONE);
         dlg.setTitle(DIALOG_TITLE);
         dlg.setContentText(String.format(DIALOG_CONTENT_MESSAGE, glyph.ordinal(), getHexValue(glyph)));
@@ -212,18 +221,21 @@ public class Gui implements GuiInterface {
     }
 
     private void setControlBackColor(Labeled ctrl) {
-        ctrl.setStyle(String.format(BACKGROUND_COLOR_STYLE, backColor.toString().substring(2)));
+        if (!backColor.equals(BUTTON_DEFAULT_COLOR)) {
+            ctrl.setStyle(String.format(BACKGROUND_COLOR_STYLE, backColor.toString().substring(2)));
+        } else {
+            ctrl.setStyle("");
+        }
     }
 
     private VBox getSizeBox() {
         VBox sizeBox = new VBox(
-                new Label(BUTTON_SIZE_LABEL_TEXT),
-                new HBox(5, getSlider(), getSpinner()));
+                new HBox(5, getGlyphNamesField(), getSlider()));
         sizeBox.setAlignment(Pos.CENTER);
         return sizeBox;
     }
 
-    private Slider getSlider() {
+    private Node getSlider() {
         slider = new Slider(GLYPH_SIZE_MIN_VALUE, GLYPH_SIZE_MAX_VALUE, GLYPH_SIZE_INITIAL_VALUE);
         slider.setMinWidth(150);
         slider.setShowTickLabels(true);
@@ -231,20 +243,100 @@ public class Gui implements GuiInterface {
         slider.setMinorTickCount(0);
         slider.setSnapToTicks(true);
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            spinner.getValueFactory().setValue(newValue.intValue());
             updateItems();
         });
-        return slider;
+        return new VBox(5, new Label(BUTTON_SIZE_LABEL_TEXT), slider);
     }
 
-    private Spinner<Integer> getSpinner() {
-        spinner = new Spinner<>(GLYPH_SIZE_MIN_VALUE, GLYPH_SIZE_MAX_VALUE, GLYPH_SIZE_INITIAL_VALUE, INCREMENT_STEP);
-        spinner.setMaxWidth(70);
-        spinner.valueProperty().addListener(v -> {
-            slider.setValue(spinner.getValue());
-            updateItems();
+    private Node getGlyphNamesField() {
+        edSearchGliph = new TextField();
+        edSearchGliph.setPrefWidth(GLYPH_NAMES_FIELD_WIDTH);
+        edSearchGliph.setPromptText(GLYPH_NAMES_PROMPT_TEXT);
+        edSearchGliph.setTooltip(new Tooltip(GLYPH_NAMES_TOOLTIP_TEXT));
+
+        VBox vBox = new VBox(5, edSearchGliph);
+        vBox.setAlignment(Pos.BOTTOM_LEFT);
+
+        Map<String, FontAwesome.Glyph> glyphMap = new HashMap<>();
+        edSearchGliph.setOnKeyPressed(e -> {
+            switch (e.getCode()) {
+                case ENTER: {
+                    String text = edSearchGliph.getText();
+                    if (glyphMap.containsKey(text)) {
+                        highlightControl(glyphMap.get(text));
+                        updateDemoButton(glyphMap.get(text));
+                    }
+                    break;
+                }
+                case ESCAPE: {
+                    edSearchGliph.setText("");
+                    topBox.getChildren().remove(btDemo);
+                    break;
+                }
+            }
+
         });
-        return spinner;
+        edSearchGliph.textProperty().addListener(e -> {
+            String text = edSearchGliph.getText();
+            if (glyphMap.containsKey(text)) {
+                highlightControl(glyphMap.get(text));
+                updateDemoButton(glyphMap.get(text));
+            }
+        });
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        Runnable task = new ApplicationThread(() -> {
+            for (FontAwesome.Glyph v : FontAwesome.Glyph.values()) {
+                glyphMap.put(v.name(), v);
+            }
+            Set<String> keySet = glyphMap.keySet();
+            String[] strings = keySet.toArray(new String[0]);
+            TextFields.bindAutoCompletion(edSearchGliph, strings);
+        });
+        executor.execute(task);
+        executor.shutdown();
+        return vBox;
+    }
+
+    private void highlightControl(FontAwesome.Glyph glyph) {
+        for (Labeled[] line : controlsLines) {
+            for (Labeled control : line) {
+                if (control.getUserData().equals(glyph.name())) {
+                    ScrollPane pane = (ScrollPane) topBox.getScene().lookup(SCROLL_PANE_ID);
+                    control.setStyle(control.getStyle() + HIGHLIGHT_BUTTON_STYLE);
+                    scrollToSelected(pane, control);
+                } else {
+                    setControlBackColor(control);
+                }
+            }
+        }
+    }
+
+    private void scrollToSelected(ScrollPane scrollPane, Node node) {
+        Bounds viewport = scrollPane.getViewportBounds();
+        // Y value
+        double contentHeight = scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
+        double nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
+        double nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
+        double vValueDelta = 0;
+        double vValueCurrent = scrollPane.getVvalue();
+        if (nodeMaxY < 0) {
+            vValueDelta = (nodeMinY - viewport.getHeight()) / (contentHeight + topBox.getHeight());
+        } else if (nodeMinY > viewport.getHeight()) {
+            vValueDelta = (nodeMinY + viewport.getHeight() - (nodeMaxY-nodeMinY)*12) / (contentHeight - topBox.getHeight());
+        }
+        // X value
+        double contentWidth = scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getWidth();
+        double nodeMinX = node.localToScene(node.getBoundsInLocal()).getMinX();
+        double nodeMaxX = node.localToScene(node.getBoundsInLocal()).getMaxX();
+        double hValueDelta = 0;
+        double hValueCurrent = scrollPane.getHvalue();
+        if (nodeMaxX < 0) {
+            hValueDelta = (nodeMinX - viewport.getWidth()) / (contentWidth);
+        } else if (nodeMinX > viewport.getWidth()) {
+            hValueDelta = (nodeMinX + viewport.getWidth() - (nodeMaxX-nodeMinX)*5) / (contentWidth);
+        }
+        scrollPane.setVvalue(vValueCurrent + vValueDelta);
+        scrollPane.setHvalue(hValueCurrent + hValueDelta);
     }
 
     private HBox getColorsBox() {
@@ -266,14 +358,17 @@ public class Gui implements GuiInterface {
                 OUN_FLAG_BUTTON_TEXT,
                 e -> updateControlsEvent(COLOR_UA_RED, COLOR_UA_BLACK));
 
+        VBox buttonsPane = new VBox(5,
+                getButtonsPane(
+                        btUaFlagColors, btOunFlagColors,
+                        btApplyColor, btResetColor)
+        );
+        buttonsPane.setAlignment(Pos.BOTTOM_CENTER);
         HBox colorBox = new HBox(5,
                 getColorPickerBox(FONT_COLOR_LABEL_TEXT, cpFontColor, fontColor, e -> fontColor = cpFontColor.getValue()),
                 btSwap,
                 getColorPickerBox(FOREGROUND_COLOR_LABEL_TEXT, cpBackColor, backColor,  e -> backColor = cpBackColor.getValue()),
-                getButtonsPane(
-                        btUaFlagColors, btOunFlagColors,
-                        btApplyColor, btResetColor
-                )
+                buttonsPane
         );
         colorBox.setAlignment(Pos.BOTTOM_CENTER);
         return colorBox;
@@ -311,7 +406,7 @@ public class Gui implements GuiInterface {
         cp.setValue(color);
         cp.setOnAction(actionEventEventHandler);
         VBox vBox = new VBox(2, new Label(text), cp);
-        vBox.setAlignment(Pos.CENTER);
+        vBox.setAlignment(Pos.BOTTOM_CENTER);
         return vBox;
     }
 }
