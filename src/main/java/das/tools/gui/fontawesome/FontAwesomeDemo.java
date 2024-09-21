@@ -10,7 +10,7 @@ import java.util.Objects;
 
 public class FontAwesomeDemo extends Application {
     protected static final int MIN_HEIGHT = 610;
-    protected static final int MIN_WIDTH = 830;
+    protected static final int MIN_WIDTH = 900;
 
     public static void main(String[] args) {
         launch(args);
