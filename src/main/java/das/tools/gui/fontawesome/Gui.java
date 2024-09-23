@@ -367,7 +367,7 @@ public class Gui implements GuiInterface {
         HBox colorBox = new HBox(5,
                 getColorPickerBox(FONT_COLOR_LABEL_TEXT, cpFontColor, fontColor, e -> fontColor = cpFontColor.getValue()),
                 btSwap,
-                getColorPickerBox(FOREGROUND_COLOR_LABEL_TEXT, cpBackColor, backColor,  e -> backColor = cpBackColor.getValue()),
+                getColorPickerBox(BACKGROUND_COLOR_LABEL_TEXT, cpBackColor, backColor, e -> backColor = cpBackColor.getValue()),
                 buttonsPane
         );
         colorBox.setAlignment(Pos.BOTTOM_CENTER);
