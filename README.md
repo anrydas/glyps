@@ -12,7 +12,7 @@ To demonstrate how ControlsFX FontAwesome Glyphs can be used
  - customizable control's font color and background
 ### ⏬ Getting
 You can download archive from [Releases section](https://github.com/anrydas/glyps/releases) or clone the repository. Release includes JavaFX runtime library.
-Select FontAwesomeDemo_v.X.Y-distribute.zip for OS Windows and FontAwesomeDemo_v.X.Y-distribute.tar.gz for OS Linux
+Select FontAwesomeDemo_v.X.Y-windows-distribute.zip for OS Windows and FontAwesomeDemo_v.X.Y-linux-distribute.tar.gz for OS Linux
 ### 🚀 Launch<a id='Launch'/>
 The application's distribution included run.cmd or run.sh depended on your OS. Just launch it.
 Note: run.* script need to `JAVA_HOME` environment variable. If it doesn't provide made changes into script to provide full path to JRE.
