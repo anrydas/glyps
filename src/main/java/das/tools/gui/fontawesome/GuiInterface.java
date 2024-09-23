@@ -27,7 +27,7 @@ public interface GuiInterface {
     int GLYPH_NAMES_FIELD_WIDTH = 130;
     String SCROLL_PANE_ID = "ScrollPane";
     String FONT_COLOR_LABEL_TEXT = "Font color:";
-    String FOREGROUND_COLOR_LABEL_TEXT = "Foreground:";
+    String BACKGROUND_COLOR_LABEL_TEXT = "Background:";
     String RESET_COLOR_BUTTON_TEXT = "Reset color to default";
     String APPLY_COLORS_BUTTON_TEXT = "Apply colors";
     String SWAP_COLORS_BUTTON_TEXT = "Swap / Reverse colors";

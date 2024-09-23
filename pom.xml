@@ -6,7 +6,7 @@
 
     <groupId>das.tools.gui</groupId>
     <artifactId>FontAwesomeDemo</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <name>Font Awesome Glyphs Demo application</name>
 
     <properties>
