@@ -12,15 +12,15 @@ import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.GlyphFont;
 
 public class GlyphInfoDialog extends Dialog<ButtonType> {
-    private GlyphFont glyphFont;
-    private FontAwesome.Glyph glyph;
+    private final GlyphFont glyphFont;
+    private final FontAwesome.Glyph glyph;
+
     public GlyphInfoDialog(GlyphFont glyphFont, FontAwesome.Glyph glyph) {
         this.glyphFont = glyphFont;
         this.glyph = glyph;
         DialogPane root = this.getDialogPane();
         root.getButtonTypes().addAll(ButtonType.OK);
         root.setHeader(getHeaderPane());
-        root.setContentText("Placeholder content");
     }
 
     private AnchorPane getHeaderPane() {

@@ -10,7 +10,6 @@ public interface GuiInterface {
     int GLYPH_SIZE_MAX_VALUE = 5;
     int GLYPH_SIZE_INITIAL_VALUE = 2;
     int DEMO_BUTTON_GLYPH_SIZE = 3;
-    int EXECUTOR_THREADS_AMOUNT = 7;
     Color BUTTON_DEFAULT_COLOR = Color.rgb(0xE6, 0xE6, 0xE6);
     Color COLOR_UA_BLUE = Color.rgb(0x00, 0x57, 0xB7);
     Color COLOR_UA_YELLOW = Color.rgb(0xFF, 0xDD, 0x00);
@@ -23,7 +22,6 @@ public interface GuiInterface {
     Insets TOP_BOX_PADDING = new Insets(5, 5, 5, 5);
     int[] MIN_WIDTH_MULTIPLIERS = {28, 26, 24, 22, 20};
     int[] GLYPHS_IN_LINE_COUNTS = {30, 23, 19, 16, 14};
-    int HEX_MASK = 0xFFFF;
     int GLYPH_NAMES_FIELD_WIDTH = 130;
     String SCROLL_PANE_ID = "ScrollPane";
     String FONT_COLOR_LABEL_TEXT = "Font color:";
@@ -33,12 +31,12 @@ public interface GuiInterface {
     String SWAP_COLORS_BUTTON_TEXT = "Swap / Reverse colors";
     String BUTTON_SIZE_LABEL_TEXT = "Buttons Sizes: ";
     String GLYPH_NAMES_PROMPT_TEXT = "Search glyph by name";
-    String GLYPH_NAMES_TOOLTIP_TEXT = GLYPH_NAMES_PROMPT_TEXT + "\nHit Enter to activate founded Glyph\nEsc - to clear";
-    String DEMO_BUTTON_TEXT = "Demo button\n%s: [%03d] [%04Xh]\nClick to copy glyph's name to clipboard\nCtrl + Click to remove this button";
+    String GLYPH_NAMES_TOOLTIP_TEXT = GLYPH_NAMES_PROMPT_TEXT + "\nHit Enter to activate found Glyph\nEsc - to clear";
+    String DEMO_BUTTON_TEXT = "Demo button\n%s: [%d] [%04Xh]\nRight click to copy glyph's name to clipboard\nCtrl + Click to remove this button";
     String DIALOG_TITLE = "Glyph Info";
-    String DIALOG_CONTENT_MESSAGE = "Code (DEC / HEX): %03d / %04Xh";
+    String DIALOG_CONTENT_MESSAGE = "Unicode (DEC / HEX): %d / %04Xh";
     String BACKGROUND_COLOR_STYLE = "-fx-background-color: #%s;";
-    String GLYPH_BUTTON_TOOLTIP_MESSAGE = "%s: [%03d] [%04Xh]\nRight click to copy glyph's name";
+    String GLYPH_BUTTON_TOOLTIP_MESSAGE = "%s: [%d] [%04Xh]\nRight click to copy glyph's name";
     String SHOW_DIALOG_LABEL_TEXT = "Show dialog";
     String SHOW_DIALOG_TOOLTIP = "Show information dialog on glyph clicked";
     String CONST_GLYPH_LABEL_TEXT = "Constant Glyphs";

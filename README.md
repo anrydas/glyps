@@ -1,42 +1,92 @@
 ## FontAwesome Glyphs Demo application
-### _ControlsFX FontAwesome Glyph viewer_
+### _ControlsFX FontAwesome Glyph viewer for JavaFX developers_
 
-[![Java 8](https://img.shields.io/badge/Java-8-white)](https://www.java.com/) [![ControlsFX](https://img.shields.io/badge/controls-FX-66B2C4)](https://controlsfx.github.io) [![maven](https://img.shields.io/badge/maven-project-blue)](https://maven.apache.org/)
+[![Java](https://img.shields.io/badge/Java-17+-green)](https://openjdk.org/) [![JavaFX](https://img.shields.io/badge/JavaFX-21.0.2-orange)](https://openjfx.io/) [![ControlsFX](https://img.shields.io/badge/ControlsFX-11.1.2-blue)](https://controlsfx.github.io) [![Version](https://img.shields.io/badge/version-1.2-lightgrey)](#)
+
+🇺🇦 [Українська версія](README_ua.md)
 
 ### 💡 Purpose
-To demonstrate how ControlsFX FontAwesome Glyphs can be used
+To demonstrate how ControlsFX FontAwesome Glyphs can be used: all 593 glyphs on one page, with their names and Unicode codes, so you can quickly find the right icon and copy its name into your code.
+
 ### 📃 Features
- - multiple OS
- - all controls in one page
- - able to search controls by its name
- - customizable control's font color and background
-### ⏬ Getting
-You can download archive from [Releases section](https://github.com/anrydas/glyps/releases) or clone the repository. Release includes JavaFX runtime library.
-Select FontAwesomeDemo_v.X.Y-windows-distribute.zip for OS Windows and FontAwesomeDemo_v.X.Y-linux-distribute.tar.gz for OS Linux
-### 🚀 Launch<a id='Launch'/>
-The application's distribution included run.cmd or run.sh depended on your OS. Just launch it.
-Note: run.* script need to `JAVA_HOME` environment variable. If it doesn't provide made changes into script to provide full path to JRE.
-### 📜 Main Window<a id='MainWin'/>
-![Main Window](images/main.png)
-#### Note: For Linux and Windows used different controls to showing glyphs, so appearance may vary slightly. Image above from Linux OS.
-### 📄 Application Menu<a id='AppMenu'/>
-![Menu bar](images/menu.png)
-1. **Demo button** - appears if glyph  was clicked in glyphs field. Shows glyph as it looks like on button.
-   Mouse **Click** - to copy Glyph's name to system clipboard
-   **Ctrl + Click** - to remove this button
-2. **Search Glyph by its name** field - start typing glyph's name to find it.
-   Press **Enter** key - to activate selected / found glyph
-   Press **Esc** key - to clear field and remove **Demo button**
-3. **Button sizes** in glyphs field. Glyph's field will change according to selected value.
-4. Glyph's **Font color** - used to change glyph's color in glyphs field. Glyph's field will change according to selected value.
-5. **Colors exchange button** - exchanging foreground and background colors
-6. Glyph's **Background color** - used to change glyph's background color in glyphs field. Glyph's field will change according to selected value.
-7. **Color buttons block**:
-   1. **Ukrainian flag colors** - applies UA flag colors as foreground and background colors.
-   2. **OUN UPA flag colors** - applies OUN UPA (Red and Black) flag colors as foreground and background colors.
-   3. **Apply current colors button** - applies currently selected colors.
-   4. **Apply default colors** - applies default (black and #e6e6e6 like gray) colors.
-8. **Options block**:
-   1. **Show dialog option** - if checked, shows dialog with glyph's information when clicked in glyph's field.
-   2. **Constant glyphs amount option** - if checked, the constant glyphs amount will be shown in the row when glyph's size have changed. Otherwise, glyph's amount will be changed from row to row
+- [Glyphs field](#GlyphsField) – all glyphs on one page with name and Unicode code in a tooltip
+- [Search glyphs by name](#Search) with autocompletion
+- [Demo button](#DemoButton) – shows how the glyph looks on a button
+- [Customizable colors](#Colors) – font and background colors, swap, UA and OUN UPA flag presets
+- [Options](#Options) – info dialog and glyphs-per-row mode
+- Linux and Windows
+
+### ⭐ Advantages
+- **Everything in one window** – no need to browse the FontAwesome site and map icon names to ControlsFX enum names.
+- **Copy-ready names** – a right click copies the exact `FontAwesome.Glyph` name to the clipboard.
+- **Ready-to-run distribution** – the release archive includes the JavaFX runtime, only Java 17+ is required.
+
+### 📱 Screenshots
+<table>
+  <tr>
+    <td align="center"><img src="images/main.png" width="400" alt="Main window" /></td>
+    <td align="center"><img src="images/menu.png" width="400" alt="Toolbar" /></td>
+  </tr>
+  <tr>
+    <td align="center"><i>Main window (Linux)</i></td>
+    <td align="center"><i>Toolbar</i></td>
+  </tr>
+</table>
+
+### 📌 Using
+
+#### Getting and launching<a id='Launch' />
+**_Download the archive for your OS, unpack it and run the script._**
+1. Download from the [Releases section](https://github.com/anrydas/glyps/releases) (or clone the repository and [build it](#Build)):
+   - `FontAwesomeDemo_v.X.Y-win-distribute.zip` – for Windows
+   - `FontAwesomeDemo_v.X.Y-linux-distribute.tar.gz` – for Linux
+2. Unpack and run `run.cmd` (Windows) or `run.sh` (Linux).
+   - The scripts use Java from `JAVA_HOME`, or `java` from `PATH` if `JAVA_HOME` is not set.
+   - They can be started from any directory.
+
+#### Glyphs field<a id='GlyphsField' />
+**_All glyphs as buttons, row by row._**
+- Hover a glyph to see its name and Unicode code (DEC / HEX), e.g. `INFO_CIRCLE: [61530] [F05Ah]`.
+- **Click** – shows the glyph on the [Demo button](#DemoButton) (and the info dialog, if enabled).
+- **Right click** – copies the glyph's name to the system clipboard.
+- **Button sizes** slider (1–5) changes the glyphs' size.
+- On Windows glyphs are shown as labels instead of buttons (rendering ~600 buttons lags there), so the appearance differs slightly.
+
+#### Search glyphs by name<a id='Search' />
+**_Start typing a glyph's name to find it._**
+- Names are autocompleted; when the text matches a name exactly, the glyph is highlighted and scrolled into view.
+- **Enter** – activates the selected / found glyph.
+- **Esc** – clears the field and removes the Demo button.
+
+#### Demo button<a id='DemoButton' />
+**_Appears when a glyph is clicked or found and shows it as it looks on a button._**
+- **Right click** – copies the glyph's name to the system clipboard.
+- **Ctrl + Click** – removes the button.
+
+#### Customizable colors<a id='Colors' />
+**_Font and background colors of the glyphs field and the Demo button._**
+1. **Font color** – glyph color picker.
+2. **Colors exchange button** – swaps font and background colors.
+3. **Background color** – glyph background color picker.
+4. **Color buttons block**:
+   - **Ukrainian flag colors** – yellow on blue.
+   - **OUN UPA flag colors** – red on black.
+   - **Apply current colors** – applies the colors selected in the pickers.
+   - **Reset to default colors** – black on #e6e6e6 gray.
+
+#### Options<a id='Options' />
+**_Check boxes on the right of the toolbar._**
+- **Show dialog** – shows a dialog with the glyph's name and Unicode code when a glyph is clicked.
+- **Constant Glyphs** – if checked, each row keeps the same number of glyphs when the size changes; otherwise the number of glyphs per row depends on the size.
+
+### 🚀 Building the application<a id='Build' />
+Requirements: JDK 17+, Maven (or the bundled `mvnw`).
+```shell
+./mvnw package           # build, run tests and create distribution archives
+./mvnw javafx:run        # run the application from sources
+```
+Archives appear in `target/`: `FontAwesomeDemo_v.X.Y-linux-distribute.tar.gz` and `FontAwesomeDemo_v.X.Y-win-distribute.zip`.
+
+**Note:** the JavaFX runtime for the archives is taken from the `libs3rd/linux/lib`, `libs3rd/win/lib` and `libs3rd/win/bin` directories, which are not stored in the repository. Put a JavaFX SDK of the same version as `javafx.version` in `pom.xml` (21.0.2) there, otherwise the archives are built without JavaFX.
+
 ###### _Made by -=:dAs:=-_

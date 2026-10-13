@@ -1,5 +1,6 @@
 package das.tools.gui.fontawesome;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
@@ -10,6 +11,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
@@ -23,12 +26,10 @@ import org.controlsfx.glyphfont.Glyph;
 import org.controlsfx.glyphfont.GlyphFont;
 import org.controlsfx.glyphfont.GlyphFontRegistry;
 
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Map;
 
 public class Gui implements GuiInterface {
     private static Gui instance;
@@ -44,7 +45,9 @@ public class Gui implements GuiInterface {
     private final CheckBox chbConstGlyphsAmount;
     private final GlyphFont glyphFont;
     private List<Labeled[]> controlsLines;
-    private TextField edSearchGliph;
+    private TextField edSearchGlyph;
+    /** Incremented on every rebuild so line-building tasks queued by a previous rebuild are skipped. */
+    private int itemsGeneration;
 
     private Gui() {
         glyphFont = GlyphFontRegistry.font("FontAwesome");
@@ -61,11 +64,6 @@ public class Gui implements GuiInterface {
     public static synchronized GuiInterface getInstance() {
         if (instance == null) {
             instance = new Gui();
-            synchronized (GuiInterface.class) {
-                if (instance == null) {
-                    instance = new Gui();
-                }
-            }
         }
         return instance;
     }
@@ -115,30 +113,25 @@ public class Gui implements GuiInterface {
         int glyphsPerLine = chbConstGlyphsAmount.isSelected() ? GLYPHS_PER_LINE : GLYPHS_IN_LINE_COUNTS[(int) slider.getValue() - 1];
         glyphsContainer.getChildren().clear();
         FontAwesome.Glyph[] glyphs = FontAwesome.Glyph.values();
-        controlsLines = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(EXECUTOR_THREADS_AMOUNT);
+        List<Labeled[]> lines = new ArrayList<>();
+        controlsLines = lines;
+        int generation = ++itemsGeneration;
+        // Lines are filled one per FX pulse so the window stays responsive while ~800 controls are created.
         for (int i = 0; i < glyphs.length; i = i + glyphsPerLine) {
             Labeled[] lineControls = new Labeled[Math.min(glyphs.length - i, glyphsPerLine)];
             HBox lineBox = new HBox(5);
             lineBox.setPadding(LINE_BOX_PADDING);
             glyphsContainer.getChildren().add(lineBox);
-            int n = i;
-            Runnable task = new ApplicationThread(() -> {
-                for (int j = n; j < n + glyphsPerLine && j < glyphs.length; j++) {
-                    FontAwesome.Glyph glyph = glyphs[j];
-                    lineControls[j < glyphsPerLine ? j : j - n] = getGlyphControl(glyph, controlWidth);
+            int lineStart = i;
+            Platform.runLater(() -> {
+                if (generation != itemsGeneration) return;
+                for (int j = 0; j < lineControls.length; j++) {
+                    lineControls[j] = getGlyphControl(glyphs[lineStart + j], controlWidth);
                 }
                 lineBox.getChildren().addAll(lineControls);
-                controlsLines.add(lineControls);
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                lines.add(lineControls);
             });
-            executor.execute(task);
         }
-        executor.shutdown();
     }
 
     /**
@@ -158,12 +151,12 @@ public class Gui implements GuiInterface {
         ctrl.setPadding(GLYPH_CONTROL_PADDING);
         setControlBackColor(ctrl);
         ctrl.setTooltip(new Tooltip(
-                String.format(GLYPH_BUTTON_TOOLTIP_MESSAGE, glyph.name(), glyph.ordinal(), getHexValue(glyph))));
+                String.format(GLYPH_BUTTON_TOOLTIP_MESSAGE, glyph.name(), getCharCode(glyph), getCharCode(glyph))));
         ctrl.setOnMouseClicked(e -> {
             if (e.getButton().equals(MouseButton.PRIMARY)) {
                 updateDemoButton(glyph);
-                String text = edSearchGliph.getText();
-                if (!"".equals(text) && !text.equals(glyph.name())) edSearchGliph.setText("");
+                String text = edSearchGlyph.getText();
+                if (!"".equals(text) && !text.equals(glyph.name())) edSearchGlyph.setText("");
                 if (chbShowDialog.isSelected()) showInfoDialog(glyph);
             } else if (e.getButton().equals(MouseButton.SECONDARY)) {
                 copyGlyphNameToClipboard(glyph);
@@ -181,7 +174,7 @@ public class Gui implements GuiInterface {
         if (btDemo != null) topBox.getChildren().remove(btDemo);
         if (glyph != null) {
             btDemo = new Button("", glyphFont.create(glyph).sizeFactor(DEMO_BUTTON_GLYPH_SIZE).color(fontColor));
-            btDemo.setTooltip(new Tooltip(String.format(DEMO_BUTTON_TEXT, glyph.name(), glyph.ordinal(), getHexValue(glyph))));
+            btDemo.setTooltip(new Tooltip(String.format(DEMO_BUTTON_TEXT, glyph.name(), getCharCode(glyph), getCharCode(glyph))));
         } else {
             btDemo = new Button("?");
         }
@@ -206,18 +199,19 @@ public class Gui implements GuiInterface {
         dlg.initOwner(slider.getScene().getWindow());
         dlg.initModality(Modality.NONE);
         dlg.setTitle(DIALOG_TITLE);
-        dlg.setContentText(String.format(DIALOG_CONTENT_MESSAGE, glyph.ordinal(), getHexValue(glyph)));
+        dlg.setContentText(String.format(DIALOG_CONTENT_MESSAGE, getCharCode(glyph), getCharCode(glyph)));
         dlg.show();
     }
 
-    private int getHexValue(FontAwesome.Glyph glyph) {
-        return glyph.ordinal() & HEX_MASK;
+    /** Unicode code point of the glyph in the FontAwesome font (e.g. F05A for INFO_CIRCLE). */
+    static int getCharCode(FontAwesome.Glyph glyph) {
+        return glyph.getChar();
     }
 
     private void copyGlyphNameToClipboard(FontAwesome.Glyph glyph) {
-        Toolkit.getDefaultToolkit()
-                .getSystemClipboard()
-                .setContents(new StringSelection(glyph.name()), null);
+        ClipboardContent content = new ClipboardContent();
+        content.putString(glyph.name());
+        Clipboard.getSystemClipboard().setContent(content);
     }
 
     private void setControlBackColor(Labeled ctrl) {
@@ -249,19 +243,19 @@ public class Gui implements GuiInterface {
     }
 
     private Node getGlyphNamesField() {
-        edSearchGliph = new TextField();
-        edSearchGliph.setPrefWidth(GLYPH_NAMES_FIELD_WIDTH);
-        edSearchGliph.setPromptText(GLYPH_NAMES_PROMPT_TEXT);
-        edSearchGliph.setTooltip(new Tooltip(GLYPH_NAMES_TOOLTIP_TEXT));
+        edSearchGlyph = new TextField();
+        edSearchGlyph.setPrefWidth(GLYPH_NAMES_FIELD_WIDTH);
+        edSearchGlyph.setPromptText(GLYPH_NAMES_PROMPT_TEXT);
+        edSearchGlyph.setTooltip(new Tooltip(GLYPH_NAMES_TOOLTIP_TEXT));
 
-        VBox vBox = new VBox(5, edSearchGliph);
+        VBox vBox = new VBox(5, edSearchGlyph);
         vBox.setAlignment(Pos.BOTTOM_LEFT);
 
         Map<String, FontAwesome.Glyph> glyphMap = new HashMap<>();
-        edSearchGliph.setOnKeyPressed(e -> {
+        edSearchGlyph.setOnKeyPressed(e -> {
             switch (e.getCode()) {
                 case ENTER: {
-                    String text = edSearchGliph.getText();
+                    String text = edSearchGlyph.getText();
                     if (glyphMap.containsKey(text)) {
                         highlightControl(glyphMap.get(text));
                         updateDemoButton(glyphMap.get(text));
@@ -269,31 +263,25 @@ public class Gui implements GuiInterface {
                     break;
                 }
                 case ESCAPE: {
-                    edSearchGliph.setText("");
+                    edSearchGlyph.setText("");
                     topBox.getChildren().remove(btDemo);
+                    btDemo = null;
                     break;
                 }
             }
 
         });
-        edSearchGliph.textProperty().addListener(e -> {
-            String text = edSearchGliph.getText();
+        edSearchGlyph.textProperty().addListener(e -> {
+            String text = edSearchGlyph.getText();
             if (glyphMap.containsKey(text)) {
                 highlightControl(glyphMap.get(text));
                 updateDemoButton(glyphMap.get(text));
             }
         });
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-        Runnable task = new ApplicationThread(() -> {
-            for (FontAwesome.Glyph v : FontAwesome.Glyph.values()) {
-                glyphMap.put(v.name(), v);
-            }
-            Set<String> keySet = glyphMap.keySet();
-            String[] strings = keySet.toArray(new String[0]);
-            TextFields.bindAutoCompletion(edSearchGliph, strings);
-        });
-        executor.execute(task);
-        executor.shutdown();
+        for (FontAwesome.Glyph v : FontAwesome.Glyph.values()) {
+            glyphMap.put(v.name(), v);
+        }
+        TextFields.bindAutoCompletion(edSearchGlyph, glyphMap.keySet().toArray(new String[0]));
         return vBox;
     }
 
